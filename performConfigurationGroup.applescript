@@ -1,8 +1,22 @@
 --NAME:  performConfigurationGroup
---VERSION: 1.0
---PURPOSE: 
+--VERSION: 1.1
+--PURPOSE: Performs series of Configurations in FileMaker Metrics file
 --NOTES:
 
+-- Set variables
+global filemaker_version
+global field_for_parameter
+global field_for_result
+global script_wrapper
+global script_callback
+global field_for_configuration
+
+--set filemaker_version to "FileMaker Pro Advanced"
+set field_for_parameter to "Utility_AppleScriptParameter_gt"
+set field_for_result to "Utility_AppleScriptResult_gt"
+set script_wrapper to "s execute script from applescript"
+set script_callback to ""
+set field_for_configuration to ""
 
 -- Prompt for database
 set _db_list to getOpenDatabases()
@@ -15,7 +29,7 @@ tell application "Finder"
 end tell
 
 -- Prompt for configuration(s)
-set _config_list to getFieldValues(_db_selected, "Configuration", "Name")
+set _config_list to getFieldValues(_db_selected, field_for_configuration)
 tell application "Finder"
 	set _config_selected_list to choose from list _config_list with prompt "Select configuration(s):" with multiple selections allowed
 	if _config_selected_list is (false as text) then
@@ -25,10 +39,10 @@ tell application "Finder"
 	
 	-- Perform each configuration
 	repeat with _config_id from 1 to the count of _config_selected_list
-		my setField(_db_selected, "Global", "Utility_AppleScriptParameter_gt", item _config_id of _config_selected_list as text)
-		my performScript(_db_selected, "s execute script from applescript", "Global::Utility_AppleScriptResult_gt", "")
+		my setField(_db_selected, field_for_parameter, item _config_id of _config_selected_list as text)
+		my performScript(_db_selected, script_wrapper, field_for_result, script_callback)
 		delay 1
-		my setField(_db_selected, "Global", "Utility_AppleScriptParameter_gt", "")
+		my setField(_db_selected, field_for_parameter, "")
 	end repeat
 end tell
 
@@ -44,21 +58,29 @@ on promptForDatabase(dbList)
 end promptForDatabase
 
 -- Handler: Returns list of all values for a specified field
---  Use document class to retrieve values for found set only
-on getFieldValues(theDatabase, tableName, fieldName)
+--    Required handlers: splitFieldName()
+--    Use document class to retrieve values for found set only
+on getFieldValues(theDatabase, fullyQualifiedFieldName)
 	tell application "FileMaker Pro Advanced"
+		set _field_items to my splitFieldName(fullyQualifiedFieldName)
+		set _table_name to item 1 of _field_items
+		set _field_name to item 2 of _field_items
 		tell database (theDatabase as text)
-			field (fieldName as text) of table (tableName as text)
+			field (_field_name as text) of table (_table_name as text)
 		end tell
 	end tell
 end getFieldValues
 
 -- Handler: Sets field value
-on setField(databaseName, tableName, fieldName, theValue)
+--    Required handlers: splitFieldName()
+on setField(databaseName, fullyQualifiedFieldName, theValue)
 	tell application "FileMaker Pro Advanced"
+		set _field_items to my splitFieldName(fullyQualifiedFieldName)
+		set _table_name to item 1 of _field_items
+		set _field_name to item 2 of _field_items
 		tell database (databaseName as text)
-			tell table (tableName as text)
-				set field fieldName to theValue
+			tell table (_table_name as text)
+				set field _field_name to theValue
 			end tell
 		end tell
 	end tell

@@ -1,29 +1,27 @@
 --NAME:  performConfigurationGroup
---VERSION: 1.1
+--VERSION: 2.0
 --PURPOSE: Performs series of Configurations in FileMaker Metrics file
 --NOTES:
 
 -- Set variables
-global filemaker_version
 global field_for_parameter
 global field_for_result
 global script_wrapper
 global script_callback
 global field_for_configuration
 
---set filemaker_version to "FileMaker Pro Advanced"
-set field_for_parameter to "Utility_AppleScriptParameter_gt"
-set field_for_result to "Utility_AppleScriptResult_gt"
+set field_for_parameter to "Global::Utility_AppleScriptParameter_gt"
+set field_for_result to "Global::Utility_AppleScriptResult_gt"
 set script_wrapper to "s execute script from applescript"
 set script_callback to ""
-set field_for_configuration to ""
+set field_for_configuration to "Configuration::Name"
 
 -- Prompt for database
 set _db_list to getOpenDatabases()
 tell application "Finder"
 	set _db_selected to (choose from list _db_list with prompt "Select database:") as text
 	if _db_selected is (false as text) then
-		display dialog "Selection is empty. Aborting." buttons {"OK"}
+		display dialog "Selection is empty. Aborting." buttons {"OK"} giving up after 5
 		error number -128
 	end if
 end tell
@@ -33,7 +31,7 @@ set _config_list to getFieldValues(_db_selected, field_for_configuration)
 tell application "Finder"
 	set _config_selected_list to choose from list _config_list with prompt "Select configuration(s):" with multiple selections allowed
 	if _config_selected_list is (false as text) then
-		display dialog "Selection is empty. Aborting." buttons {"OK"}
+		display dialog "Selection is empty. Aborting." buttons {"OK"} giving up after 5
 		error number -128
 	end if
 	
@@ -45,6 +43,9 @@ tell application "Finder"
 		my setField(_db_selected, field_for_parameter, "")
 	end repeat
 end tell
+
+-- Nofify user of completion
+display dialog "Configurations Complete" buttons {"OK"} giving up after 5
 
 ----------------------------------------
 -- HANDLERS
@@ -103,7 +104,7 @@ on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptNa
 		end tell
 	end tell
 	-- Ensure process is complete
-	delay 1
+	delay 2
 	-- Store result in designated global field
 	tell application "FileMaker Pro Advanced"
 		tell database databaseName
@@ -111,9 +112,18 @@ on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptNa
 				set _result_field_items to my splitFieldName(resultFieldNameFull)
 				set _result_table to item 1 of _result_field_items
 				set _result_field to item 2 of _result_field_items
-				tell table _result_table
-					set field _result_field to _result
-				end tell
+				set _continue to true
+				repeat while _continue is true
+					set _continue to false
+					try
+						tell table _result_table
+							set field _result_field to _result
+						end tell
+					on error _error_text number _error_number
+						delay 10
+						set _continue to true
+					end try
+				end repeat
 			end if
 			if callbackScriptName is not "" then
 				do script callbackScriptName

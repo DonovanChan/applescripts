@@ -1,6 +1,7 @@
 --NAME:  performConfigurationGroup
---VERSION: 2.0
+--VERSION: 3.0
 --PURPOSE: Performs series of Configurations in FileMaker Metrics file
+--HISTORY: Created 2010.06.17 by Donovan Chandler
 --NOTES:
 --TO DO: Add option to close and reopen the file between configurations
 
@@ -19,24 +20,21 @@ set field_for_configuration to "Configuration::Name"
 
 -- Prompt for database
 set _db_list to getOpenDatabases()
-tell application "Finder"
-	set _db_selected to (choose from list _db_list with prompt "Select database:") as text
-	if _db_selected is (false as text) then
-		my displayCancelMessage()
-		error number -128
-	end if
-end tell
+set _db_selected to (choose from list _db_list with prompt "Select database:") as text
+if _db_selected is (false as text) then
+	my displayCancelMessage()
+	error number -128
+end if
+
 
 -- Prompt for configuration(s)
 set _config_list to getFieldValues(_db_selected, field_for_configuration)
-tell application "Finder"
-	set _config_selected_list to choose from list _config_list with prompt "Select configuration(s):" with multiple selections allowed
-	if _config_selected_list is (false as text) then
-		my displayCancelMessage()
-		error number -128
-	end if
-end tell
-	
+set _config_selected_list to choose from list _config_list with prompt "Select configuration(s):" with multiple selections allowed
+if _config_selected_list is (false as text) then
+	displayCancelMessage()
+	error number -128
+end if
+
 -- Prompt for number of times to repeat set of configurations
 try
 	set _loop_total to promptForInteger("How many times would you like to perform this set of Configurations?", 1)
@@ -44,21 +42,19 @@ on error
 	displayCancelMessage()
 	error number -128
 end try
+
+-- Repeat set of configurations
+repeat _loop_total times
 	
-tell application "Finder"
-	-- Repeat set of configurations
-	repeat _loop_total times
-		
-		-- Perform each configuration
-		repeat with _config_id from 1 to the count of _config_selected_list
-			my setField(_db_selected, field_for_parameter, item _config_id of _config_selected_list as text)
-			my performScript(_db_selected, script_wrapper, field_for_result, script_callback)
-			delay 1
-			my setField(_db_selected, field_for_parameter, "")
-		end repeat
-		
+	-- Perform each configuration
+	repeat with _config_id from 1 to the count of _config_selected_list
+		setField(_db_selected, field_for_parameter, item _config_id of _config_selected_list as text)
+		performScript(_db_selected, script_wrapper, field_for_result, script_callback)
+		delay 1
+		setField(_db_selected, field_for_parameter, "")
 	end repeat
-end tell
+	
+end repeat
 
 -- Nofify user of completion
 display dialog "Configurations Complete" buttons {"OK"} giving up after 5

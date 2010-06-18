@@ -123,3 +123,19 @@ on getScriptNames(theDatabase)
 		end if
 	end tell
 end getScriptNames
+
+on getTableNames
+	tell application "FileMaker Pro Advanced"
+		set myTableList to {}
+		copy number of tables to mytblcount
+		if mytblcount = 0 then
+			display dialog "There are no FileMaker 7 databases open!" buttons "Ok" with icon stop giving up after 5
+		else
+			repeat with tblLoop from 1 to mytblcount
+				--get name of each table
+				copy name of table tblLoop to end of myTableList
+			end repeat
+		end if
+		myTableList
+	end tell
+end getTableNames

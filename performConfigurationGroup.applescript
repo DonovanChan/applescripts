@@ -2,6 +2,7 @@
 --VERSION: 2.0
 --PURPOSE: Performs series of Configurations in FileMaker Metrics file
 --NOTES:
+--TO DO: Add option to close and reopen the file between configurations
 
 -- Set variables
 global field_for_parameter
@@ -21,7 +22,7 @@ set _db_list to getOpenDatabases()
 tell application "Finder"
 	set _db_selected to (choose from list _db_list with prompt "Select database:") as text
 	if _db_selected is (false as text) then
-		display dialog "Selection is empty. Aborting." buttons {"OK"} giving up after 5
+		my displayCancelMessage()
 		error number -128
 	end if
 end tell
@@ -31,16 +32,31 @@ set _config_list to getFieldValues(_db_selected, field_for_configuration)
 tell application "Finder"
 	set _config_selected_list to choose from list _config_list with prompt "Select configuration(s):" with multiple selections allowed
 	if _config_selected_list is (false as text) then
-		display dialog "Selection is empty. Aborting." buttons {"OK"} giving up after 5
+		my displayCancelMessage()
 		error number -128
 	end if
+end tell
 	
-	-- Perform each configuration
-	repeat with _config_id from 1 to the count of _config_selected_list
-		my setField(_db_selected, field_for_parameter, item _config_id of _config_selected_list as text)
-		my performScript(_db_selected, script_wrapper, field_for_result, script_callback)
-		delay 1
-		my setField(_db_selected, field_for_parameter, "")
+-- Prompt for number of times to repeat set of configurations
+try
+	set _loop_total to promptForInteger("How many times would you like to perform this set of Configurations?", 1)
+on error
+	displayCancelMessage()
+	error number -128
+end try
+	
+tell application "Finder"
+	-- Repeat set of configurations
+	repeat _loop_total times
+		
+		-- Perform each configuration
+		repeat with _config_id from 1 to the count of _config_selected_list
+			my setField(_db_selected, field_for_parameter, item _config_id of _config_selected_list as text)
+			my performScript(_db_selected, script_wrapper, field_for_result, script_callback)
+			delay 1
+			my setField(_db_selected, field_for_parameter, "")
+		end repeat
+		
 	end repeat
 end tell
 
@@ -57,6 +73,28 @@ on promptForDatabase(dbList)
 		set _db_selected to choose from list dbList with prompt "Select database:"
 	end tell
 end promptForDatabase
+
+-- Handler: Cancel Message
+on displayCancelMessage()
+	display dialog "Selection is empty. Aborting." buttons {"OK"} giving up after 5
+end displayCancelMessage
+
+-- Handler: Prompts for integer
+on promptForInteger(message, defaultAnswer)
+	repeat
+		set _dialog to display dialog message ¬
+			default answer defaultAnswer ¬
+			with icon 1 ¬
+			buttons {"OK"} ¬
+			default button "OK"
+		try
+			set _result_integer to (text returned of _dialog) as integer
+			if _result_integer is not 0 then exit repeat
+		end try
+		display dialog "Invalid entry. Please enter an integer greater than 0." buttons {"Enter Again", "Cancel"} default button 1
+	end repeat
+	_result_integer
+end promptForInteger
 
 -- Handler: Returns list of all values for a specified field
 --    Required handlers: splitFieldName()

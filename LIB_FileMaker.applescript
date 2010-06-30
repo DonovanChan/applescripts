@@ -1,15 +1,15 @@
-----------------------------------------
--- HANDLERS
-----------------------------------------
+---------------------------------------------
+--	SCRIPT LIBRARY: FILEMAKER
+---------------------------------------------
 
--- Handler: Prompt user for file
+--Handler: Prompt user for file
 on promptForDatabase(dbList)
 	tell application "Finder"
 		set _db_selected to choose from list dbList with prompt "Select database:"
 	end tell
 end promptForDatabase
 
--- Handler: Returns list of all values for a specified field
+--Handler: Returns list of all values for a specified field
 --  Use document class to retrieve values for found set only
 on getFieldValues(theDatabase, tableName, fieldName)
 	tell application "FileMaker Pro Advanced"
@@ -19,7 +19,7 @@ on getFieldValues(theDatabase, tableName, fieldName)
 	end tell
 end getFieldValues
 
--- Handler: Sets field value
+--Handler: Sets field value
 on setField(databaseName, tableName, fieldName, theValue)
 	tell application "FileMaker Pro Advanced"
 		tell database (databaseName as text)
@@ -30,7 +30,7 @@ on setField(databaseName, tableName, fieldName, theValue)
 	end tell
 end setField
 
--- Handler: Performs script, sets result to global field, then performs callback script
+--Handler: Performs script, sets result to global field, then performs callback script
 --    Required handlers: splitFieldName()
 on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptName)
 	tell application "FileMaker Pro Advanced"
@@ -66,7 +66,7 @@ on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptNa
 	end tell
 end performScript
 
--- Handler: Splits fully qualified field name into array {table,field}
+--Handler: Splits fully qualified field name into array {table,field}
 to splitFieldName(fullyQualifiedFieldName)
 	set _delim to AppleScript's text item delimiters
 	set AppleScript's text item delimiters to "::"
@@ -80,7 +80,7 @@ to splitFieldName(fullyQualifiedFieldName)
 	end if
 end splitFieldName
 
--- Handler: Returns list of open FileMaker databases
+--Handler: Returns list of open FileMaker databases
 on getOpenDatabases()
 	tell application "FileMaker Pro Advanced"
 		set _file_list to {}
@@ -97,7 +97,7 @@ on getOpenDatabases()
 	end tell
 end getOpenDatabases
 
--- Handler: Returns list of script names for specified FileMaker document
+--Handler: Returns list of script names for specified FileMaker document
 on getScriptNames(theDatabase)
 	tell application "FileMaker Pro Advanced"
 		set myTblNum to 1
@@ -124,6 +124,7 @@ on getScriptNames(theDatabase)
 	end tell
 end getScriptNames
 
+--Handler: Returns list of table names of frontmost FileMaker file
 on getTableNames
 	tell application "FileMaker Pro Advanced"
 		set myTableList to {}
@@ -139,3 +140,32 @@ on getTableNames
 		myTableList
 	end tell
 end getTableNames
+
+--Handler: Converts xml text to FileMaker clipboard format
+--Parameters: clipText, outputFormat [script|script_step|table|field|custom_function]
+--Methodology: Write text to temp file so that it can be converted from file
+--Formats:
+--	XMSC for script definitions
+--	XMSS for script steps
+--	XMTB for table definitions
+--	XMFD for field definitions
+--	XMCF for custom functions
+on convertClip(clipText, outputFormat)
+	set temp_path to (path to temporary items as Unicode text) & "FMClip.dat"
+	set temp_ref to open for access file temp_path with write permission
+	set eof temp_ref to 0
+	write clipText to temp_ref
+	close access temp_ref
+	if outputFormat is "script" then
+		set clipTextFormatted to read file temp_path as «class XMSC»
+	else if outputFormat is "script_step" then
+		set clipTextFormatted to read file temp_path as «class XMSS»
+	else if outputFormat is "table" then
+		set clipTextFormatted to read file temp_path as «class XMTB»
+	else if outputFormat is "field" then
+		set clipTextFormatted to read file temp_path as «class XMFD»
+	else if outputFormat is "custom_function" then
+		set clipTextFormatted to read file temp_path as «class XMCF»
+	end if
+	return clipTextFormatted
+end convertClip

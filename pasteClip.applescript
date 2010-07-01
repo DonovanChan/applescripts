@@ -1,21 +1,32 @@
---NAME: PasteClip
---VERSION: 1.0
---PURPOSE: Pastes FileMaker object into active FileMaker file using object from defined file alias
---HISTORY: Created 2010.06.30 by Donovan Chandler, donovan_c@beezwax.net
---NOTES: 
+-- NAME: PasteClip
+-- VERSION: 1.0
+-- PURPOSE: Pastes FileMaker object into active FileMaker file using object from defined file alias
+-- HISTORY: Created 2010.06.30 by Donovan Chandler, donovan_c@beezwax.net
+-- NOTES: 
 
 ------------------------------------------------
 ---- Settings ----
---Placeholder, replaced with calculated date
+-- Placeholder, replaced with calculated date
 set strDatePlaceholder to "%DATE%"
 
---Alias to XML file containting FileMaker clip
-set clipAlias to alias "Macintosh HD:Users:Donovan:Documents:Repository:Clip Manager Clips:Scripts:Partial:scs_focusHeader.xmss"
+-- Alias to XML file containting FileMaker clip
+--	e.g., "Macintosh HD:Users:Me:Desktop:myClip.xml"
+--set clipAlias to "" as alias
 
---Format of FileMaker object in clip [script|script_step|table|field|custom_function]
+-- Alternative alias
+--	File in ../Clips
+--	Disable if clip path specified above
+if true then
+	set clipName to "scriptHeaderSteps.xml"
+	set clipDir to POSIX file (POSIX path of (path to me) & "/..") as text
+	set clipAlias to (clipDir & "Clips:" & clipName) as alias
+end if
+
+-- Format of FileMaker object in clip [script|script_step|table|field|custom_function]
 set clipClass to "script_step"
 
---Paste clip in automatically?
+-- Paste clip in automatically?
+--	Not yet supported
 set autoPasteClip to false
 
 ------------------------------------------------
@@ -34,15 +45,15 @@ set the clipboard to clipTextFormatted
 if autoPasteClip is true then paste()
 
 ------------------------------------------------
--- HANDLERS
+--  HANDLERS
 ------------------------------------------------
 
---Handler: Performs paste
+-- Handler: Performs paste
 on paste()
 	tell application "System Events" to keystroke "v" using {command down}
 end paste
 
---Handler: Searches and replaces string within text block
+-- Handler: Searches and replaces string within text block
 to searchReplaceText(theText, searchString, replaceString)
 	set searchString to searchString as list
 	set replaceString to replaceString as list
@@ -60,12 +71,12 @@ to searchReplaceText(theText, searchString, replaceString)
 	return theText
 end searchReplaceText
 
---Handler: Returns text from file.  Prompts for file if no alias specified.
+-- Handler: Returns text from file.  Prompts for file if no alias specified.
 on readFile(fileAlias)
 	if fileAlias = "" then
 		set theFile to choose file with prompt (localized string "chooseFile")
 	else
-		set theFile to fileAlias without write permission
+		set theFile to fileAlias
 	end if
 	try
 		open for access theFile
@@ -80,10 +91,10 @@ on readFile(fileAlias)
 	end try
 end readFile
 
---Handler: Converts xml text to FileMaker clipboard format
---Parameters: clipText, outputFormat [script|script_step|table|field|custom_function]
---Methodology: Write text to temp file so that it can be converted from file
---Formats:
+-- Handler: Converts xml text to FileMaker clipboard format
+-- Parameters: clipText, outputFormat [script|script_step|table|field|custom_function]
+-- Methodology: Write text to temp file so that it can be converted from file
+-- Formats:
 --	XMSC for script definitions
 --	XMSS for script steps
 --	XMTB for table definitions

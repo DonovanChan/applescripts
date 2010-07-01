@@ -5,7 +5,7 @@
 --NOTES: 
 
 set theFile to choose file with prompt ¬
-	"Select your file:" default location ¬
+	"Select your file. Its alias will be copied to the clipboard." default location ¬
 	path to home folder
 
 set theFileAlias to theFile as alias

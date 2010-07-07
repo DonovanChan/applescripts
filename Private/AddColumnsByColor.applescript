@@ -2,7 +2,7 @@
 NAME:
 	AddColumnsByColor
 VERSION:
-	3.1
+	3.2
 PURPOSE:
 	Uses settings to populate new columns based on which background colors exist within each row.
 	Performs against active sheet in Microsoft Excel.
@@ -16,7 +16,7 @@ NOTES:
 ---- Settings ----
 set _headerRowIndex to 1
 set _dataRowStartIndex to _headerRowIndex + 1
-set _dataRowEndIndex to 100
+_rangeSelectedText to "A1:V562"
 set _columnRecordList to {¬
 	{columnName:"METI Case", columnIndex:"", colorTests:{¬
 		{colorIndex:4, colorName:"dkGreen", fieldValue:1} ¬
@@ -57,8 +57,8 @@ tell application "Microsoft Excel"
 	
 	-- Gather data about worksheet
 	set _worksheet to active sheet
-	--set _rangeUsed to used range of _worksheet
-	set _rangeUsed to range "A1:W26" of _worksheet
+	--set _rangeSelected to range selection of active window
+	set _rangeSelected to range _rangeSelectedText of _worksheet
 	
 	-- Create new columns
 	repeat with col from 1 to length of _columnRecordList
@@ -81,18 +81,14 @@ tell application "Microsoft Excel"
 		set columnIndex of contents of _columnRecord to _columnIndex
 	end repeat
 	set _headerList to my getRowValues(_worksheet, _headerRowIndex)
-	--set _rangeUsed to used range of _worksheet
-	set _rangeUsed to range ¬
-		((get address of row (_dataRowStartIndex) of column 1) & ":" & ¬
-			(get address of row _dataRowEndIndex of column (columnIndex of last item of _columnRecordList)))
 	set _rangeNew to range ¬
 		((get address of row _headerRowIndex of column (columnIndex of first item of _columnRecordList)) & ":" & ¬
 			(get address of row _headerRowIndex of column (my getMaxColumnIndex(_columnRecordList))))
 	
 	-- Loop through used rows
-	set _rowMaxIndex to first row index of last row of _rangeUsed
+	set _rowMaxIndex to first row index of last row of _rangeSelected
 	repeat with i from _dataRowStartIndex to _rowMaxIndex
-		set _rangeCur to my getRowRange(_rangeUsed, i)
+		set _rangeCur to my getRowRange(_rangeSelected, i)
 		set _rowCurIndex to first row index of _rangeCur
 		set _colColorList to my getCellColorIndex(_rangeCur)
 		
@@ -157,12 +153,12 @@ on getRowValues(theWorksheet, rowNumber)
 end getRowValues
 
 -- Handler: Returns specified row of used range (output is class range)
-on getRowRangeUsed(theWorksheet, rowNumber)
+on getRowRangeUsed(rangeUsed, rowNumber)
 	tell application "Microsoft Excel"
-		if theWorksheet is "" then
+		if rangeUsed is "" then
 			set _rangeUsed to used range of active sheet
 		else
-			set _rangeUsed to used range of theWorksheet
+			set _rangeUsed to rangeUsed
 		end if
 		return my getRowRange(_rangeUsed, rowNumber)
 	end tell

@@ -16,7 +16,7 @@ NOTES:
 ---- Settings ----
 set _headerRowIndex to 1
 set _dataRowStartIndex to _headerRowIndex + 1
-_rangeSelectedText to "A1:V562"
+set _rangeSelectedText to "A1:V562"
 set _columnRecordList to {¬
 	{columnName:"METI Case", columnIndex:"", colorTests:{¬
 		{colorIndex:4, colorName:"dkGreen", fieldValue:1} ¬

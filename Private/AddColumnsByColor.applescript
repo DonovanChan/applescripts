@@ -2,7 +2,7 @@
 NAME:
 	AddColumnsByColor
 VERSION:
-	1.0
+	3.1
 PURPOSE:
 	Uses settings to populate new columns based on which background colors exist within each row.
 	Performs against active sheet in Microsoft Excel.
@@ -15,25 +15,42 @@ NOTES:
 ------------------------------------------------
 ---- Settings ----
 set _headerRowIndex to 1
-set _headerUL to "Unit Location"
-set _headerN to "NITE"
-set _colorRecordList to {¬
-	{colorIndex:4, colorName:"dkGreen", fieldName:"METI Case", fieldValue:1}, ¬
-	{colorIndex:20, colorName:"ltGreen", fieldName:"CAA Case", fieldValue:1}, ¬
-	{colorIndex:12, colorName:"brown", fieldName:"Personal Injury Case", fieldValue:1}, ¬
-	{colorIndex:33, colorName:"turquoise", fieldName:"Exponent Report Completed", fieldValue:1}, ¬
-	{colorIndex:15, colorName:"gray", fieldName:_headerUL, fieldValue:"Unit Sent to US"}, ¬
-	{colorIndex:34, colorName:"skyBlue", fieldName:_headerUL, fieldValue:"Unit in Japan"}, ¬
-	{colorIndex:32, colorName:"sage", fieldName:_headerUL, fieldValue:"Unit to Kimura-san"}, ¬
-	{colorIndex:38, colorName:"pink", fieldName:_headerUL, fieldValue:"Exception"}, ¬
-	{colorIndex:41, colorName:"blue", fieldName:"iPod Blameless", fieldValue:1}, ¬
-	{colorIndex:46, colorName:"orange", fieldName:_headerN, fieldValue:"Sep 10, 2008 (14 Cases)"}, ¬
-	{colorIndex:7, colorName:"pink", fieldName:_headerN, fieldValue:"June 2009 (2 Cases)"}, ¬
-	{colorIndex:13, colorName:"indigo", fieldName:_headerN, fieldValue:"March 2010 (9 Cases)"}, ¬
-	{colorIndex:54, colorName:"plum", fieldName:"Model", fieldValue:"1 GB"} ¬
+set _dataRowStartIndex to _headerRowIndex + 1
+set _columnRecordList to {¬
+	{columnName:"METI Case", columnIndex:"", colorTests:{¬
+		{colorIndex:4, colorName:"dkGreen", fieldValue:1} ¬
+			}}, ¬
+	{columnName:"CAA Case", columnIndex:"", colorTests:{¬
+		{colorIndex:20, colorName:"ltGreen", fieldValue:1} ¬
+			}}, ¬
+	{columnName:"Personal Injury Case", columnIndex:"", colorTests:{¬
+		{colorIndex:12, colorName:"brown", fieldValue:1} ¬
+			}}, ¬
+	{columnName:"Exponent Report Completed", columnIndex:"", colorTests:{¬
+		{colorIndex:33, colorName:"turquoise", fieldValue:1} ¬
+			}}, ¬
+	{columnName:"Unit Location", columnIndex:"", colorTests:{¬
+		{colorIndex:15, colorName:"gray", fieldValue:"Unit Sent to US"}, ¬
+		{colorIndex:34, colorName:"skyBlue", fieldValue:"Unit in Japan"}, ¬
+		{colorIndex:32, colorName:"sage", fieldValue:"Unit to Kimura-san"}, ¬
+		{colorIndex:38, colorName:"pink", fieldValue:"Exception"} ¬
+			}}, ¬
+	{columnName:"iPod Blameless", columnIndex:"", colorTests:{¬
+		{colorIndex:41, colorName:"blue", fieldValue:1} ¬
+			}}, ¬
+	{columnName:"NITE", columnIndex:"", colorTests:{¬
+		{colorIndex:46, colorName:"orange", fieldValue:"Sep 10, 2008 (14 Cases)"}, ¬
+		{colorIndex:7, colorName:"hotPink", fieldValue:"June 2009 (2 Cases)"}, ¬
+		{colorIndex:13, colorName:"indigo", fieldValue:"March 2010 (9 Cases)"} ¬
+			}}, ¬
+	{columnName:"Model", columnIndex:"", colorTests:{¬
+		{colorIndex:54, colorName:"plum", fieldValue:"1 GB"} ¬
+			}} ¬
 		}
 
 ------------------------------------------------
+-- Instantiate variable to store list of column values for each row
+set _resultRowList to {}
 
 tell application "Microsoft Excel"
 	
@@ -41,41 +58,84 @@ tell application "Microsoft Excel"
 	set _worksheet to active sheet
 	set _rangeUsed to used range of _worksheet
 	
+	-- Create new columns
+	repeat with col from 1 to length of _columnRecordList
+		set _columnRecord to (a reference to item col of _columnRecordList)
+		set _columnNameCur to columnName of _columnRecord
+		set _headerList to my getRowValues(_worksheet, _headerRowIndex)
+		set _columnIndex to my getListPosition(_headerList, _columnNameCur)
+		-- Create column if necessary
+		if _columnIndex is 0 then
+			--Create column if necessary
+			set _colEndRange to get end (used range of active sheet) direction toward the right
+			set _colNextIndex to get (first column index of _colEndRange) + 1
+			set _rangeFlag to range (get address of row _headerRowIndex of column _colNextIndex)
+			set value of _rangeFlag to _columnNameCur
+			set bold of font object of _rangeFlag to true
+			set _columnIndex to _colNextIndex
+		end if
+		-- Update instructions record with column index of fieldName
+		--set contents of _columnRecord to (contents of _columnRecord) & {columnIndex:_columnIndex}
+		set columnIndex of contents of _columnRecord to _columnIndex
+	end repeat
+	set _headerList to my getRowValues(_worksheet, _headerRowIndex)
+	set _rangeUsed to used range of _worksheet
+	set _rangeNew to range ¬
+		((get address of row _headerRowIndex of column (columnIndex of first item of _columnRecordList)) & ":" & ¬
+			(get address of row _headerRowIndex of column (columnIndex of last item of _columnRecordList)))
+	
 	-- Loop through used rows
 	set _rowMaxIndex to first row index of last row of _rangeUsed
-	repeat with i from 1 to _rowMaxIndex
-		set _rangeCur to my getRowRange(_worksheet, i)
+	repeat with i from _dataRowStartIndex to _rowMaxIndex
+		set _rangeCur to my getRowRange(_rangeUsed, i)
 		set _rowCurIndex to first row index of _rangeCur
 		set _colColorList to my getCellColorIndex(_rangeCur)
 		
-		-- Loop through all colors for each column
-		repeat with j from 1 to length of _colorRecordList
-			set _colorRecord to item j of _colorRecordList
-			set _colorCur to colorIndex of _colorRecord
+		-- Loop through all new column definitions
+		set _testResultList to {}
+		repeat with j from 1 to length of _columnRecordList
+			set _columnRecord to item j of _columnRecordList
+			set _columnTestList to colorTests of _columnRecord
+			set _columnIndexCur to columnIndex of _columnRecord
 			
-			-- If color exists, enter flag in corresponding column
-			if _colColorList contains _colorCur then
-				set _fieldNameCur to fieldName of _colorRecord
-				set _headerList to my getRowValues(_worksheet, _headerRowIndex)
-				set _colFlagIndex to my getListPosition(_headerList, _fieldNameCur)
-				-- Create column of necessary
-				if _colFlagIndex is 0 then
-					--Create column if necessary
-					set _colEndRange to get end (used range of active sheet) direction toward the right
-					set _colNextIndex to get (first column index of _colEndRange) + 1
-					set value of range (get address of row _headerRowIndex of column _colNextIndex) to _fieldNameCur
-					set _colFlagIndex to _colNextIndex
-				end if
-				-- Set flag value in corresponding column
-				set _flagRange to range (get address of row _rowCurIndex of column _colFlagIndex)
-				set _flagValue to fieldValue of _colorRecord
-				set value of _flagRange to _flagValue
+			-- Loop through all tests for column
+			repeat with _testNum from 1 to length of _columnTestList
+				set _testCur to item _testNum of _columnTestList
+				set _colorCurIndex to colorIndex of _testCur
 				
-			end if
+				-- Append correct value to result list
+				if _colColorList contains _colorCurIndex then
+					set _resultValueCur to fieldValue of _testCur
+				else
+					set _resultValueCur to ""
+				end if
+				
+				-- Don't append empty values for multiples tests under same column
+				set _columnTestListLength to length of _columnTestList
+				if _columnTestListLength > 1 then
+					if _resultValueCur is not "" then
+						set end of _testResultList to _resultValueCur
+					else if _testNum is _columnTestListLength then
+						set end of _testResultList to ""
+					end if
+				else
+					set end of _testResultList to _resultValueCur
+				end if
+			end repeat
+			
 		end repeat
+		-- Append new row values to result list
+		set _resultRowList to _resultRowList & {_testResultList}
 		
 	end repeat
 	
+	-- Send new values to Excel (looping over every row)
+	set _resultIndex to 0
+	repeat with i from _dataRowStartIndex to length of _resultRowList
+		set _resultIndex to _resultIndex + 1
+		set _rowRange to my getRowRange(_rangeNew, i)
+		set value of _rowRange to item _resultIndex of _resultRowList
+	end repeat
 end tell
 
 ------------------------------------------------
@@ -85,20 +145,30 @@ end tell
 --    Dependencies: getRowRange()
 on getRowValues(theWorksheet, rowNumber)
 	tell application "Microsoft Excel"
-		set _range to my getRowRange(theWorksheet, rowNumber)
+		set _range to my getRowRange(used range of theWorksheet, rowNumber)
 		set _rowValueList to value of _range
-		--range ("A" & rowNumber & ":" & (get address of row rowNumber of column _colLast))
 		item 1 of _rowValueList
 	end tell
 end getRowValues
 
 -- Handler: Returns specified row of used range (output is class range)
-on getRowRange(theWorksheet, rowNumber)
+on getRowRangeUsed(theWorksheet, rowNumber)
 	tell application "Microsoft Excel"
-		set _rangeUsed to used range of theWorksheet
-		set _colFirst to first column index of first column of _rangeUsed
-		set _colLast to first column index of last column of _rangeUsed
-		set _rangeRow to range ¬
+		if theWorksheet is "" then
+			set _rangeUsed to used range of active sheet
+		else
+			set _rangeUsed to used range of theWorksheet
+		end if
+		return my getRowRange(_rangeUsed, rowNumber)
+	end tell
+end getRowRangeUsed
+
+-- Handler: Returns row of specified range (output is class range)
+on getRowRange(theRange, rowNumber)
+	tell application "Microsoft Excel"
+		set _colFirst to first column index of first column of theRange
+		set _colLast to first column index of last column of theRange
+		return range ¬
 			((get address of row rowNumber of column _colFirst) & ":" & ¬
 				(get address of row rowNumber of column _colLast))
 	end tell
@@ -129,59 +199,3 @@ on getListPosition(theList, theItem)
 	end repeat
 	return 0
 end getListPosition
-
-------------------------------------------------
--- HANDLERS - UNUSED
-------------------------------------------------
-
--- Handler: Returns range of column following used area, with rows as high as used area.
-on getNextColumnRange(theWorksheet)
-	tell application "Microsoft Excel"
-		set _worksheet to theWorksheet
-		set _rangeUsed to used range of _worksheet
-		set _rowFirst to first row index of _rangeUsed
-		set _rowLast to first row index of last row of _rangeUsed
-		set _colLast to first column index of last column of _rangeUsed
-		set _colNext to (_colLast + 1)
-		
-		set _rangeNewStart to (get address of cell _rowFirst of column _colNext)
-		set _rangeNewEnd to (get address of cell _rowLast of column _colNext)
-		set _rangeNew to range (_rangeNewStart & ":" & _rangeNewEnd)
-	end tell
-end getNextColumnRange
-
-(*
-NAME:
-	flagRows(theWorksheet, theRange, colorIndexList, flagList, flagRange)
-PURPOSE:
-	Iterates over cells in theRange. If current cell has background color found in colorIndexList, corresponding item from flagList will be set to cell in flagRange.
-EXAMPLE:
-	flagRows( active sheet,"B2:B30",{"33","38"},{"blue","pink"},"W2:W30")
-*)
-on flagRows(theWorksheet, theRange, colorIndexList, flagList, flagRange)
-	tell application "Microsoft Excel"
-		set _worksheet to theWorksheet
-		if class of selection is range then
-			set _range to theRange
-		else
-			set _range to theRange as range
-		end if
-		set _colorList to colorIndexList as list
-		set _flagList to flagList as list
-		set _flagRange to range flagRange
-		
-		set _cellCount to count of cells of _range
-		repeat with i from 1 to _cellCount
-			set _colorFoundCur to color index of interior object of cell i of _range
-			
-			repeat with j from 1 to (length of _colorList)
-				set _colorCheckCur to item j of _colorList
-				if _colorFoundCur is _colorCheckCur then
-					set _cellFlagged to cell i of _flagRange
-					set _flagCur to item j of _flagList
-					set value of _cellFlagged to _flagCur
-				end if
-			end repeat
-		end repeat
-	end tell
-end flagRows

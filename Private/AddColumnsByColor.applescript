@@ -16,6 +16,7 @@ NOTES:
 ---- Settings ----
 set _headerRowIndex to 1
 set _dataRowStartIndex to _headerRowIndex + 1
+set _dataRowEndIndex to 100
 set _columnRecordList to {¬
 	{columnName:"METI Case", columnIndex:"", colorTests:{¬
 		{colorIndex:4, colorName:"dkGreen", fieldValue:1} ¬
@@ -56,7 +57,8 @@ tell application "Microsoft Excel"
 	
 	-- Gather data about worksheet
 	set _worksheet to active sheet
-	set _rangeUsed to used range of _worksheet
+	--set _rangeUsed to used range of _worksheet
+	set _rangeUsed to range "A1:W26" of _worksheet
 	
 	-- Create new columns
 	repeat with col from 1 to length of _columnRecordList
@@ -79,10 +81,13 @@ tell application "Microsoft Excel"
 		set columnIndex of contents of _columnRecord to _columnIndex
 	end repeat
 	set _headerList to my getRowValues(_worksheet, _headerRowIndex)
-	set _rangeUsed to used range of _worksheet
+	--set _rangeUsed to used range of _worksheet
+	set _rangeUsed to range ¬
+		((get address of row (_dataRowStartIndex) of column 1) & ":" & ¬
+			(get address of row _dataRowEndIndex of column (columnIndex of last item of _columnRecordList)))
 	set _rangeNew to range ¬
 		((get address of row _headerRowIndex of column (columnIndex of first item of _columnRecordList)) & ":" & ¬
-			(get address of row _headerRowIndex of column (columnIndex of last item of _columnRecordList)))
+			(get address of row _headerRowIndex of column (my getMaxColumnIndex(_columnRecordList))))
 	
 	-- Loop through used rows
 	set _rowMaxIndex to first row index of last row of _rangeUsed
@@ -199,3 +204,15 @@ on getListPosition(theList, theItem)
 	end repeat
 	return 0
 end getListPosition
+
+-- Handler: Returns item in _columnRecordList with highest columnIndex
+on getMaxColumnIndex(recordList)
+	set _indexMax to 0
+	repeat with i from 1 to length of recordList
+		set _indexCur to columnIndex of item i of recordList
+		if (_indexCur as integer) is greater than (_indexMax as integer) then
+			set _indexMax to _indexCur as integer
+		end if
+	end repeat
+	return _indexMax
+end getMaxColumnIndex

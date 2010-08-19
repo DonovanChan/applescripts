@@ -2,7 +2,7 @@
 NAME:
 	AddColumnsByColor
 VERSION:
-	3.2
+	3.3
 PURPOSE:
 	Uses settings to populate new columns based on which background colors exist within each row.
 	Performs against active sheet in Microsoft Excel.
@@ -14,14 +14,9 @@ NOTES:
 
 ------------------------------------------------
 ---- Settings ----
-
--- Define range you'd like to analyse
---    ('used range/ was too slow.  could try to dereference it through)
-set _rangeSelectedText to "A1:V562"
 set _headerRowIndex to 1
 set _dataRowStartIndex to _headerRowIndex + 1
-
--- Define new columns and values they are to receive in each row if background color is found in that row
+set _rangeSelectedText to "A1:V562"
 set _columnRecordList to {¬
 	{columnName:"Confirmed", columnIndex:"", colorTests:{¬
 		{colorIndex:4, colorName:"dkGreen", fieldValue:1} ¬

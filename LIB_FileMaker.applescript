@@ -19,7 +19,7 @@ on getFieldValues(theDatabase, tableName, fieldName)
 	end tell
 end getFieldValues
 
---Handler: Sets field value
+--Handler: Sets FileMaker field value
 on setField(databaseName, tableName, fieldName, theValue)
 	tell application "FileMaker Pro Advanced"
 		tell database (databaseName as text)

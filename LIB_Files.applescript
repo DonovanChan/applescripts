@@ -57,3 +57,106 @@ to stripStartupDisk(thePath)
 	end if
 	return pathText
 end stripStartupDisk
+
+-- HANDLER: Appends new timestamped line to log file
+--	Alternative file name or location must be modified in the code
+on updateLog(logEntry)
+	do shell script "TEXT=$(echo " & quoted form of logEntry & " ); echo \"`date '+%Y.%m.%d %H:%M:%S'`\t$TEXT"\" >> ~/Desktop/error_log.txt"
+end updateLog
+
+-- HANDLER: Replaces file with timestamped entry
+--	Alternative file name or location must be modified in the code
+on replaceLog(logEntry, logPath)
+	do shell script "TEXT=$(echo " & quoted form of logEntry & " );echo \"`date '+%Y.%m.%d %H:%M:%S'`
+$TEXT\" > " & logPath
+end replaceLog
+
+-- HANDLER: Returns list of files as return-delimited text string
+--	addStartupDrive allows prepending of disk name to each path
+--	Required handlers: trimLinesRight
+to fileListToText(theList, addStartupDrive)
+	set theText to ""
+	tell application "Finder"
+		set hdName to get name of startup disk
+	end tell
+	repeat with i in theList
+		set myPath to POSIX path of (i as alias)
+		if addStartupDrive is true then set myPath to hdName & (myPath as text)
+		set theText to theText & myPath & return
+	end repeat
+	return trimLinesRight(theText)
+end fileListToText
+
+-- HANDLER: Removes trailing newlines
+to trimLinesRight(theText)
+	repeat while theText ends with return
+		set theText to theText's text 1 thru -2
+	end repeat
+	return theText
+end trimLinesRight
+
+-- HANDLER: Returns path as text with startup disk removed
+to stripStartupDisk(thePath)
+	set pathText to thePath as text
+	tell application "Finder"
+		set hdName to name of startup disk
+	end tell
+	set hdLen to length of hdName
+	if text 1 thru hdLen of pathText is equal to hdName then
+		set pathText to text (hdLen + 1) thru -1 of pathText
+	end if
+	return pathText
+end stripStartupDisk
+
+-- HANDLER: Monitors file until it is downloaded (determined by its size being constant)
+to waitForDownload(listOfFileAliases, delayDuration)
+	repeat with f in listOfFileAliases
+		set oldSize to 0
+		set newSize to -1
+		-- Wait for size to remain constant
+		repeat while newSize is not equal to oldSize
+			--set oldSize to size of (info for f)
+			set oldSize to size of f
+			delay delayDuration
+			--set newSize to size of (info for f)
+			set newSize to size of f
+		end repeat
+	end repeat
+end waitForDownload
+
+-- HANDLER: Deletes specified files
+to deleteFiles(listOfFileAliases)
+	--if class of listOfFileAliases is text then set listOfFileAliases to {listOfFileAliases}
+	repeat with f in listOfFileAliases
+		set the file_path to the quoted form of the POSIX path of f
+		do shell script ("rm -fr " & file_path)
+	end repeat
+end deleteFiles
+
+-- HANDLER: Filters one list of documents by another
+to filterDocuments(listToFilter, valuesToOmit)
+	set listToFilter to convertDocumentList(listToFilter)
+	set valuesToOmit to convertDocumentList(valuesToOmit)
+	set myResult to {}
+	repeat with i in listToFilter
+		if valuesToOmit does not contain i then set end of myResult to i as text
+	end repeat
+	return myResult
+end filterDocuments
+
+-- HANDLER: Takes list of aliases as text and returns list of file names
+--	Note: Requires stripPath() handler
+on listAliasesToNames(aliasList)
+	set nameList to {}
+	repeat with i in aliasList
+		set end of nameList to stripPath(i as text)
+	end repeat
+	return nameList
+end listAliasesToNames
+
+-- HANDLER: Strips directories from file path, leaving name only
+--	Note: requires lastOffset() handler
+on stripPath(thePath)
+	set nameStart to (my lastOffset(thePath, ":")) + 1
+	return text nameStart thru (length of thePath) of thePath
+end stripPath

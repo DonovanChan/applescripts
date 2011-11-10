@@ -41,3 +41,19 @@ on isNumber(x)
     return ({class of x} is in {real, integer, number}) 
 end isNumber 
 filter({"hey", 1, "ho", 2, 3}, isNumber)
+
+-- HANDLER: Returns list of files as return-delimited text string
+--	addStartupDrive allows prepending of disk name to each path
+--	Required handlers: trimLinesRight
+to fileListToText(theList, addStartupDrive)
+	set theText to ""
+	tell application "Finder"
+		set hdName to get name of startup disk
+	end tell
+	repeat with i in theList
+		set myPath to POSIX path of (i as alias)
+		if addStartupDrive is true then set myPath to hdName & (myPath as text)
+		set theText to theText & myPath & return
+	end repeat
+	return trimLinesRight(theText)
+end fileListToText

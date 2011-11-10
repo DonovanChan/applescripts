@@ -1,4 +1,4 @@
----------------------------------------------
+﻿---------------------------------------------
 --	SCRIPT LIBRARY: FILEMAKER
 ---------------------------------------------
 
@@ -169,3 +169,11 @@ on convertClip(clipText, outputFormat)
 	end if
 	return clipTextFormatted
 end convertClip
+
+-- HANDLER: Creates text string as FileMaker name-value pair
+on fmhash(name, value)
+	set searchList to [":", "=", ">", "<"]
+	set replaceList to ["/:", "/=", "/>", "/<"]
+	return "<:" & my searchReplaceText(name, searchList, replaceList) & ¬
+		":=" & searchReplaceText(value, searchList, replaceList) & ":>"
+end fmhash

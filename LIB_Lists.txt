@@ -11,7 +11,7 @@ to join(theList, delimiter)
 	return theResult
 end join
 
--- HANDLER: Filters one list by another
+-- HANDLER: Removes values from list
 to filterList(listToFilter, valuesToOmit)
 	set myResult to {}
 	repeat with i in listToFilter

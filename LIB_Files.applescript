@@ -2,7 +2,7 @@
 --	SCRIPT LIBRARY: FILE  MANAGEMENT
 ---------------------------------------------
 
--- Handler: Returns text from file.  Prompts for file if no alias specified.
+-- HANDLER: Returns text from file.  Prompts for file if no alias specified.
 on readFile(fileAlias)
 	if fileAlias = "" then
 		set theFile to choose file with prompt (localized string "chooseFile")
@@ -22,7 +22,7 @@ on readFile(fileAlias)
 	end try
 end readFile
 
--- Handler: Saves text to file
+-- HANDLER: Saves text to file
 on saveText(theText, filePath)
 	if filePath = "" then
 		set filePath to choose file name with prompt "Choose file to write to"
@@ -40,28 +40,16 @@ on saveText(theText, filePath)
 	return filePath as alias
 end saveText
 
--- Handler: Returns POSIX path of file as text
-to posixPath(filePath)
+-- HANDLER: Returns AppleScript path of file as text
+--	"/Users/joe/Desktop" => "Macintosh HD:Users:joe:Desktop"
+to appleScriptPath(filePath)
 	return POSIX file (POSIX path of filePath) as text
-end posixPath
-
--- Handler: Returns path as text with startup disk removed
-to stripStartupDisk(thePath)
-	set pathText to thePath as text
-	tell application "Finder"
-		set hdName to name of startup disk
-	end tell
-	set hdLen to length of hdName
-	if text 1 thru hdLen of pathText is equal to hdName then
-		set pathText to text (hdLen + 1) thru -1 of pathText
-	end if
-	return pathText
-end stripStartupDisk
+end appleScriptPath
 
 -- HANDLER: Appends new timestamped line to log file
 --	Alternative file name or location must be modified in the code
 on updateLog(logEntry)
-	do shell script "TEXT=$(echo " & quoted form of logEntry & " ); echo \"`date '+%Y.%m.%d %H:%M:%S'`\t$TEXT"\" >> ~/Desktop/error_log.txt"
+	do shell script "TEXT=$(echo " & quoted form of logEntry & " ); echo \"`date '+%Y.%m.%d %H:%M:%S'`	$TEXT\" >> ~/Desktop/error_log.txt"
 end updateLog
 
 -- HANDLER: Replaces file with timestamped entry

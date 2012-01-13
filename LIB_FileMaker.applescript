@@ -2,14 +2,14 @@
 --	SCRIPT LIBRARY: FILEMAKER
 ---------------------------------------------
 
---Handler: Prompt user for file
+-- HANDLER: Prompt user for file
 on promptForDatabase(dbList)
 	tell application "Finder"
 		set _db_selected to choose from list dbList with prompt "Select database:"
 	end tell
 end promptForDatabase
 
---Handler: Returns list of all values for a specified field
+-- HANDLER: Returns list of all values for a specified field
 --  Use document class to retrieve values for found set only
 on getFieldValues(theDatabase, tableName, fieldName)
 	tell application "FileMaker Pro Advanced"
@@ -19,8 +19,10 @@ on getFieldValues(theDatabase, tableName, fieldName)
 	end tell
 end getFieldValues
 
---Handler: Sets FileMaker field value
+-- HANDLER: Sets FileMaker field value
+--	Be sure to include extension if you have periods in file name
 on setField(databaseName, tableName, fieldName, theValue)
+	-- Calculate application name when generating script for users on Pro
 	tell application "FileMaker Pro Advanced"
 		tell database (databaseName as text)
 			tell table (tableName as text)
@@ -30,7 +32,7 @@ on setField(databaseName, tableName, fieldName, theValue)
 	end tell
 end setField
 
---Handler: Performs script, sets result to global field, then performs callback script
+-- HANDLER: Performs script, sets result to global field, then performs callback script
 --    Required handlers: splitFieldName()
 on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptName)
 	tell application "FileMaker Pro Advanced"
@@ -66,7 +68,7 @@ on performScript(databaseName, scriptName, resultFieldNameFull, callbackScriptNa
 	end tell
 end performScript
 
---Handler: Splits fully qualified field name into array {table,field}
+-- HANDLER: Splits fully qualified field name into array {table,field}
 to splitFieldName(fullyQualifiedFieldName)
 	set _delim to AppleScript's text item delimiters
 	set AppleScript's text item delimiters to "::"
@@ -80,7 +82,7 @@ to splitFieldName(fullyQualifiedFieldName)
 	end if
 end splitFieldName
 
---Handler: Returns list of open FileMaker databases
+-- HANDLER: Returns list of open FileMaker databases
 on getOpenDatabases()
 	tell application "FileMaker Pro Advanced"
 		set _file_list to {}
@@ -97,7 +99,7 @@ on getOpenDatabases()
 	end tell
 end getOpenDatabases
 
---Handler: Returns list of script names for specified FileMaker document
+-- HANDLER: Returns list of script names for specified FileMaker document
 on getScriptNames(theDatabase)
 	tell application "FileMaker Pro Advanced"
 		set myTblNum to 1
@@ -124,8 +126,8 @@ on getScriptNames(theDatabase)
 	end tell
 end getScriptNames
 
---Handler: Returns list of table names of frontmost FileMaker file
-on getTableNames
+-- HANDLER: Returns list of table names of frontmost FileMaker file
+on getTableNames()
 	tell application "FileMaker Pro Advanced"
 		set myTableList to {}
 		copy number of tables to mytblcount
@@ -141,7 +143,7 @@ on getTableNames
 	end tell
 end getTableNames
 
---Handler: Converts xml text to FileMaker clipboard format
+-- HANDLER: Converts xml text to FileMaker clipboard format
 --Parameters: clipText, outputFormat [script|script_step|table|field|custom_function]
 --Methodology: Write text to temp file so that it can be converted from file
 --Formats:

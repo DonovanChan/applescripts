@@ -2,11 +2,8 @@
 to openInSafari(theURL)
 	tell application "Safari"
 		activate
-		-- Ensure we're not working in the Downloads window
 		try
-			set frontName to name of front window
-			if frontName is "Downloads" then 1 / 0
-			if frontName begins with "Source" then 1 / 0
+			make new tab with properties {URL:theURL as string}
 		on error
 			make new document with properties {URL:theURL as string}
 		end try

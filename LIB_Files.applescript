@@ -83,7 +83,7 @@ to trimLinesRight(theText)
 	return theText
 end trimLinesRight
 
--- HANDLER: Returns path as text with startup disk removed
+-- HANDLER: Returns path as text with startup disk removed. Intended for use with posix paths.
 to stripStartupDisk(thePath)
 	set pathText to thePath as text
 	tell application "Finder"
@@ -92,11 +92,14 @@ to stripStartupDisk(thePath)
 	set hdLen to length of hdName
 	if text 1 thru hdLen of pathText is equal to hdName then
 		set pathText to text (hdLen + 1) thru -1 of pathText
+	else if text 1 thru (hdLen + 1) of pathText is equal to ("/" & hdName) then
+		set pathText to text (hdLen + 2) thru -1 of pathText
 	end if
 	return pathText
 end stripStartupDisk
 
 -- HANDLER: Monitors file until it is downloaded (determined by its size being constant)
+--	TODO check for version that monitors file.download
 to waitForDownload(listOfFileAliases, delayDuration)
 	repeat with f in listOfFileAliases
 		set oldSize to 0
@@ -131,6 +134,33 @@ to filterDocuments(listToFilter, valuesToOmit)
 	end repeat
 	return myResult
 end filterDocuments
+
+-- HANDLER: Returns list of data describing file or folder:
+--   the path to its parent directory,
+--   its name without its file extension, and
+--   its file extension
+--   Source: http://www.alecjacobson.com/weblog/?p=229
+on fileInfo(this_file)
+	set default_delimiters to AppleScript's text item delimiters
+	-- if given file is a folder then strip terminal ":" so as to return
+	-- folder name as file name and true parent directory
+	if last item of (this_file as string) = ":" then
+		set AppleScript's text item delimiters to ""
+		set this_file to (items 1 through -2 of (this_file as string)) as string
+	end if
+	set AppleScript's text item delimiters to ":"
+	set this_parent_dir to (text items 1 through -2 of (this_file as string)) as string
+	set this_name to (text item -1 of (this_file as string)) as string
+	-- default or no extension is empty string
+	set this_extension to ""
+	if this_name contains "." then
+		set AppleScript's text item delimiters to "."
+		set this_extension to the last text item of this_name
+		set this_name to (text items 1 through -2 of this_name) as string
+	end if
+	set AppleScript's text item delimiters to default_delimiters
+	return {this_parent_dir, this_name, this_extension}
+end fileInfo
 
 -- HANDLER: Takes list of aliases as text and returns list of file names
 --	Note: Requires stripPath() handler

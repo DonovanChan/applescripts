@@ -1,4 +1,4 @@
----------------------------------------------
+﻿---------------------------------------------
 --	SCRIPT LIBRARY: LIST HANDLING
 ---------------------------------------------
 
@@ -23,23 +23,23 @@ end filterList
 -- HANDLER: Filters list by criterion
 --	Note, criterion can be a handler!
 --	Source: http://www.apeth.net/matt/unm/asph.html
-on filter(L, crit) 
-    script filterer 
-        property criterion : crit 
-        on filter(L)
-            if L = {} then return L 
-            if criterion(item 1 of L) then 
-                return {item 1 of L} & filter(rest of L) 
-            else 
-                return filter(rest of L) 
-            end if
-        end filter
-    end script 
-    return filterer's filter(L)
-end filter 
-on isNumber(x) 
-    return ({class of x} is in {real, integer, number}) 
-end isNumber 
+on filter(L, crit)
+	script filterer
+		property criterion : crit
+		on filter(L)
+			if L = {} then return L
+			if criterion(item 1 of L) then
+				return {item 1 of L} & filter(rest of L)
+			else
+				return filter(rest of L)
+			end if
+		end filter
+	end script
+	return filterer's filter(L)
+end filter
+on isNumber(x)
+	return ({class of x} is in {real, integer, number})
+end isNumber
 filter({"hey", 1, "ho", 2, 3}, isNumber)
 
 -- HANDLER: Returns list of files as return-delimited text string
@@ -57,3 +57,12 @@ to fileListToText(theList, addStartupDrive)
 	end repeat
 	return trimLinesRight(theText)
 end fileListToText
+
+-- HANDLER: Removes duplicate values from list
+to uniqueValues(listToFilter)
+	set myResult to {}
+	repeat with i in listToFilter
+		if myResult does not contain i then set end of myResult to i as text
+	end repeat
+	return myResult
+end uniqueValues

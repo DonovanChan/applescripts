@@ -1,8 +1,12 @@
--- NAME: PasteClip
--- VERSION: 1.0
--- PURPOSE: Pastes FileMaker object into active FileMaker file using object from defined file alias
--- HISTORY: Created 2010.06.30 by Donovan Chandler, donovan_c@beezwax.net
--- NOTES: 
+﻿(*
+NAME: PasteClip
+VERSION: 1.0
+PURPOSE: Pastes FileMaker object into active FileMaker file using object from defined file alias
+HISTORY:
+	Created 2010.06.30 by Donovan Chandler, donovan_c@beezwax.net
+	Modified 2012.04.03 by Donovan Chandler: Added support for XML2 format (in FM 12)
+NOTES: 
+*)
 
 ------------------------------------------------
 ---- Settings ----
@@ -91,8 +95,8 @@ on readFile(fileAlias)
 	end try
 end readFile
 
--- Handler: Converts xml text to FileMaker clipboard format
--- Parameters: clipText, outputFormat [script|script_step|table|field|custom_function]
+-- HANDLER: Converts xml text to FileMaker clipboard format
+-- Parameters: clipText, outputClass [script|script_step|table|field|custom_function]
 -- Methodology: Write text to temp file so that it can be converted from file
 -- Formats:
 --	XMSC for script definitions
@@ -100,22 +104,30 @@ end readFile
 --	XMTB for table definitions
 --	XMFD for field definitions
 --	XMCF for custom functions
-on convertClip(clipText, outputFormat)
+--	XML2 for layout objects in FileMaker 12
+--	XMLO for layout objects in FileMaker 7-11
+on convertClip(clipText, outputClass)
 	set temp_path to (path to temporary items as Unicode text) & "FMClip.dat"
 	set temp_ref to open for access file temp_path with write permission
 	set eof temp_ref to 0
-	write clipText to temp_ref
+	write clipText to temp_ref as «class utf8»
 	close access temp_ref
-	if outputFormat is "script" then
+	if outputClass is "XMSC" then
 		set clipTextFormatted to read file temp_path as «class XMSC»
-	else if outputFormat is "script_step" then
+	else if outputClass is "XMSS" then
 		set clipTextFormatted to read file temp_path as «class XMSS»
-	else if outputFormat is "table" then
+	else if outputClass is "XMTB" then
 		set clipTextFormatted to read file temp_path as «class XMTB»
-	else if outputFormat is "field" then
+	else if outputClass is "XMFD" then
 		set clipTextFormatted to read file temp_path as «class XMFD»
-	else if outputFormat is "custom_function" then
-		set clipTextFormatted to read file temp_path as «class XMCF»
+	else if outputClass is "XMFN" then
+		set clipTextFormatted to read file temp_path as «class XMFN»
+	else if outputClass is "XML2" then
+		set clipTextFormatted to read file temp_path as «class XML2»
+	else if outputClass is "XMLO" then
+		set clipTextFormatted to read file temp_path as «class XMLO»
+	else
+		return "Error: Snippet class not recognized"
 	end if
 	return clipTextFormatted
 end convertClip

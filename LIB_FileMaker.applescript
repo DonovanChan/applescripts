@@ -21,8 +21,10 @@ end getFieldValues
 
 -- HANDLER: Sets FileMaker field value
 --	Be sure to include extension if you have periods in file name
+--	tableName = basetable, not the table occurrence
 on setField(databaseName, tableName, fieldName, theValue)
 	-- Calculate application name when generating script for users on Pro
+	--	Or, just use `tell application me`
 	tell application "FileMaker Pro Advanced"
 		tell database (databaseName as text)
 			tell table (tableName as text)

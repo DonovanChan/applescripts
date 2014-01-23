@@ -178,3 +178,26 @@ on stripPath(thePath)
 	set nameStart to (my lastOffset(thePath, ":")) + 1
 	return text nameStart thru (length of thePath) of thePath
 end stripPath
+
+-- HANDLER: Strips directories from posix-style file path, leaving name only
+--	Note: requires lastOffset() handler
+on stripPathPOSIX(thePath)
+	set nameStart to (my lastOffset(thePath, "/")) + 1
+	return text nameStart thru (length of thePath) of thePath
+end stripPath
+
+-- HANDLER: Returns alias based on posix path
+--	e.g., posixAlias(POSIX file "Macintosh HD/.DS_Store")
+on posixAlias(posixPath)
+	lstripString(posixPath as text, ":") as alias
+end posixAlias
+
+-- HANDLER: Checks if file exists
+on fileExists(filePath)
+	try
+		alias (filePath as text)
+		return true
+	on error
+		return false
+	end try
+end fileExists

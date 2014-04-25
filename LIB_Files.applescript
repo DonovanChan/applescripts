@@ -201,3 +201,12 @@ on fileExists(filePath)
 		return false
 	end try
 end fileExists
+
+-- HANDLER: Returns path to file's directory.
+--	Accepts alias or string, returning string
+on aliasDir(thePath)
+	set thePath to thePath as text
+	set thePathRev to (reverse of characters of thePath) as text
+	set dirEnd to (length of thePath) - (offset of ":" in thePathRev) + 1
+	return text 1 thru dirEnd of thePath
+end aliasDir

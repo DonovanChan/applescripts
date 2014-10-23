@@ -186,6 +186,18 @@ on stripPathPOSIX(thePath)
 	return text nameStart thru (length of thePath) of thePath
 end stripPath
 
+-- HANDLER: Returns path or filename with extension removed
+-- Requires lastOffset() handler
+on stripExtension(pathAsText)
+	set _extStart to lastOffset(pathAsText, ".")
+	if _extStart > 0 then
+		set _nameEnd to _extStart - 1
+	else
+		set _nameEnd to length of pathAsText
+	end if
+	return text 1 thru _nameEnd of pathAsText
+end stripExtension
+
 -- HANDLER: Returns alias based on posix path
 --	e.g., posixAlias(POSIX file "Macintosh HD/.DS_Store")
 on posixAlias(posixPath)
@@ -210,3 +222,24 @@ on aliasDir(thePath)
 	set dirEnd to (length of thePath) - (offset of ":" in thePathRev) + 1
 	return text 1 thru dirEnd of thePath
 end aliasDir
+
+-- HANDLER: Converts posix path to applescript path
+--	e.g., applescriptPath("/Users/file.txt") //returns "Macintosh HD:Users:file.txt"
+on applescriptPath(pathToFile)
+	tell application "Finder"
+		set hdName to name of startup disk
+	end tell
+	if (offset of hdName in pathToFile) = 0 then
+		set fullPath to hdName
+		if text item 1 of pathToFile is not "/" then
+			set fullPath to fullPath & "/"
+		end if
+		set fullPath to fullPath & pathToFile
+	end if
+	set applescriptPath to (POSIX file fullPath) as text
+	if text item 1 of applescriptPath is ":" then
+		set applescriptPath to text 2 thru (length of applescriptPath) of applescriptPath
+	end if
+	return applescriptPath
+end applescriptPath
+

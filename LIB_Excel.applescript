@@ -153,18 +153,18 @@ end deleteColumn
 on alphaToNumeric(inchar)
 	set alphabet to "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	if (count of inchar) = 1 then return offset of inchar in alphabet
-	
+
 	set letterList to every character of inchar
 	set letterValueList to {}
 	repeat with i in (items 1 through ((count of inchar) - 1) of letterList as list)
 		set letterValueList to letterValueList & {((offset of i in alphabet) * 26)}
 	end repeat
-	
+
 	set sum to 0
 	repeat with i from 1 to (count of letterValueList) in letterValueList
 		set sum to sum + ((item i of letterValueList) * (((count of letterValueList) - i) * 26))
 	end repeat
-	
+
 	return sum + (last item of letterValueList) + (offset of (last item of inchar) in alphabet)
 end alphaToNumeric
 
@@ -182,3 +182,27 @@ on numericToAlpha(inNumber)
 	end repeat
 	return temp
 end numericToAlpha
+
+-- HANDLER: Save Excel file to CSV
+-- Returns AppleScript path to file
+-- Uses current file name, overwriting existing csv file if necessary
+on saveExcelToCSV(filePath)
+	tell application "Microsoft Excel"
+		activate
+		set _sourceWorkbook to open workbook workbook file name filePath
+		set _sourcepath to full name of _sourceWorkbook
+		set _newFilename to my stripExtension(my stripPath(_sourcepath)) & ".csv"
+		set _sourceWorksheet to worksheet 1 of _sourceWorkbook
+
+		save as _sourceWorksheet ¬
+			filename _newFilename ¬
+			file format CSV Mac file format with overwrite
+
+		if full name of active workbook is _sourcepath then close active workbook saving yes
+		if name of active workbook is _newFilename then
+			set _newPath to full name of active workbook
+			close active workbook saving yes
+		end if
+		return _newPath
+	end tell
+end saveExcelToCSV
